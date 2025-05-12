@@ -5,22 +5,19 @@ import GObject from 'gi://GObject';
 
 export default class windowIsReadyRemover {
     enable() {
-        this.blockSignal('window-demands-attention');
-        this.blockSignal('window-marked-urgent');
+        this._windowDemandsAttentionId = global.display.connect('window-demands-attention', this._onWindowDemandsAttention.bind(this));
     }
 
     disable() {
-        this.unblockSignal('window-demands-attention');
-        this.unblockSignal('window-marked-urgent');
+        if (this._windowDemandsAttentionId) {
+            global.display.disconnect(this._windowDemandsAttentionId);
+            this._windowDemandsAttentionId = null;
+        }
     }
 
-    blockSignal(id) {
-        let signalId = GObject.signal_handler_find(global.display, { signalId: id });
-        GObject.signal_handler_block(global.display, signalId);
-    }
-
-    unblockSignal(id){
-        let signalId = GObject.signal_handler_find(global.display, { signalId: id });
-        GObject.signal_handler_unblock(global.display, signalId);
+    _onWindowDemandsAttention(display, window) {
+        if (window) {
+            Main.activateWindow(window);
+        }
     }
 }
